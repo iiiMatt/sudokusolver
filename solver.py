@@ -28,9 +28,9 @@ class BacktrackingSolver(Solver):
         self.empty_cells = BacktrackingSolver._get_all_empty_cells(self.board)
 
         # contains which values are already in a row/col/box
-        self.rows: list[set[int]] = [set() for _ in range(9)]
-        self.cols: list[set[int]] = [set() for _ in range(9)]
-        self.boxes: list[set[int]] = [set() for _ in range(9)]
+        self.rows = [False] * 81
+        self.cols = [False] * 81
+        self.boxes = [False] * 81
 
         self._init_sections()
 
@@ -38,19 +38,14 @@ class BacktrackingSolver(Solver):
         for row in range(9):
             for col in range(9):
                 num = self.board[9 * row + col]
-                self._add_to_sections((row, col), num)
+                if num > 0:
+                    self._set_sections((row, col), num, True)
 
-    def _add_to_sections(self, cell: (int, int), num: int):
+    def _set_sections(self, cell: (int, int), num: int, value: bool):
         row, col = cell
-        self.rows[row].add(num)
-        self.cols[col].add(num)
-        self.boxes[3 * (row // 3) + (col // 3)].add(num)
-
-    def _remove_from_sections(self, cell: (int, int), num: int):
-        row, col = cell
-        self.rows[row].remove(num)
-        self.cols[col].remove(num)
-        self.boxes[3 * (row // 3) + (col // 3)].remove(num)
+        self.rows[9 * row + num - 1] = value
+        self.cols[9 * col + num - 1] = value
+        self.boxes[9 * (3 * (row // 3) + (col // 3)) + num - 1] = value
 
     def solve(self) -> SudokuBoard:
         self._fill_board()
@@ -67,12 +62,12 @@ class BacktrackingSolver(Solver):
 
         for num in range(1, 10):
             if self.is_possible(empty_cell, num):
-                self._add_to_sections(empty_cell, num)
+                self._set_sections(empty_cell, num, True)
                 self.board[index] = num
                 if self._fill_board():
                     return True
                 self.board[index] = 0
-                self._remove_from_sections(empty_cell, num)
+                self._set_sections(empty_cell, num, False)
 
         self.empty_cells.append(empty_cell)
 
@@ -102,15 +97,15 @@ class BacktrackingSolver(Solver):
         row, col = cell
 
         # Checking the row
-        if num in self.rows[row]:
+        if self.rows[9 * row + num - 1]:
             return False
 
         # Checking the column
-        if num in self.cols[col]:
+        if self.cols[9 * col + num - 1]:
             return False
 
         # Checking the box
-        if num in self.boxes[3 * (row // 3) + (col // 3)]:
+        if self.boxes[9 * (3 * (row // 3) + (col // 3)) + num - 1]:
             return False
 
         return True

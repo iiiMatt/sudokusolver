@@ -13,34 +13,68 @@ def board_to_str(board: SudokuBoard) -> str:
 
 
 class Solver(ABC):
-    @staticmethod
+    def __init__(self, board: SudokuBoard):
+        self.board = copy(board)
+
     @abstractmethod
-    def solve(board: SudokuBoard) -> SudokuBoard:
+    def solve(self) -> SudokuBoard:
         pass
 
 
 class BacktrackingSolver(Solver):
-    @staticmethod
-    def solve(board: SudokuBoard) -> SudokuBoard:
-        res = copy(board)
-        BacktrackingSolver._fill_board(res)
-        return res
+    def __init__(self, board: SudokuBoard):
+        super().__init__(board)
 
-    @staticmethod
-    def _fill_board(board: SudokuBoard):
-        empty_cell = BacktrackingSolver._find_first_empty_cell(board)
+        self.empty_cells = BacktrackingSolver._get_all_empty_cells(self.board)
 
-        if empty_cell is None:
+        # contains which values are already in a row/col/box
+        self.rows: list[set[int]] = [set() for _ in range(9)]
+        self.cols: list[set[int]] = [set() for _ in range(9)]
+        self.boxes: list[set[int]] = [set() for _ in range(9)]
+
+        self._init_sections()
+
+    def _init_sections(self):
+        for row in range(9):
+            for col in range(9):
+                num = self.board[9 * row + col]
+                self._add_to_sections((row, col), num)
+
+    def _add_to_sections(self, cell: (int, int), num: int):
+        row, col = cell
+        self.rows[row].add(num)
+        self.cols[col].add(num)
+        self.boxes[3 * (row // 3) + (col // 3)].add(num)
+
+    def _remove_from_sections(self, cell: (int, int), num: int):
+        row, col = cell
+        self.rows[row].remove(num)
+        self.cols[col].remove(num)
+        self.boxes[3 * (row // 3) + (col // 3)].remove(num)
+
+    def solve(self) -> SudokuBoard:
+        self._fill_board()
+        return self.board
+
+    def _fill_board(self):
+        if not self.empty_cells:
             return True
+
+        empty_cell = self.empty_cells.pop()
+
         row, col = empty_cell
         index = 9 * row + col
 
         for num in range(1, 10):
-            if BacktrackingSolver.is_possible(board, empty_cell, num):
-                board[index] = num
-                if BacktrackingSolver._fill_board(board):
+            if self.is_possible(empty_cell, num):
+                self._add_to_sections(empty_cell, num)
+                self.board[index] = num
+                if self._fill_board():
                     return True
-                board[index] = 0
+                self.board[index] = 0
+                self._remove_from_sections(empty_cell, num)
+
+        self.empty_cells.append(empty_cell)
 
         return False
 
@@ -54,27 +88,29 @@ class BacktrackingSolver(Solver):
         return None
 
     @staticmethod
-    def is_possible(board: SudokuBoard, cell: (int, int), num: int) -> bool:
+    def _get_all_empty_cells(board: SudokuBoard):
+        empty_cells = []
+        for row in range(9):
+            for col in range(9):
+                index = 9 * row + col
+                if board[index] == 0:
+                    empty_cells.append((row, col))
+
+        return empty_cells
+
+    def is_possible(self, cell: (int, int), num: int) -> bool:
         row, col = cell
 
         # Checking the row
-        for _col in range(9):
-            if board[9 * row + _col] == num:
-                return False
+        if num in self.rows[row]:
+            return False
 
         # Checking the column
-        for _row in range(9):
-            if board[9 * _row + col] == num:
-                return False
+        if num in self.cols[col]:
+            return False
 
         # Checking the box
-        box_id = 3 * (row // 3) + (col // 3)
-        for i in range(3):
-            for j in range(3):
-                _row = 3 * (box_id // 3) + i
-                _col = 3 * (box_id % 3) + j
-
-                if board[9 * _row + _col] == num:
-                    return False
+        if num in self.boxes[3 * (row // 3) + (col // 3)]:
+            return False
 
         return True

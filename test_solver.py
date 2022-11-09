@@ -1,11 +1,12 @@
 import unittest
 from random import choices
 from solver import BacktrackingSolver, str_to_board, board_to_str
+import numpy as np
 
 
 class SolverTest(unittest.TestCase):
     board_str = '000400970000051600042000010030000000070508064000070000700030000300090000005864009'
-    board = [
+    board = np.array([
         0, 0, 0,  4, 0, 0,  9, 7, 0,
         0, 0, 0,  0, 5, 1,  6, 0, 0,
         0, 4, 2,  0, 0, 0,  0, 1, 0,
@@ -17,8 +18,8 @@ class SolverTest(unittest.TestCase):
         7, 0, 0,  0, 3, 0,  0, 0, 0,
         3, 0, 0,  0, 9, 0,  0, 0, 0,
         0, 0, 5,  8, 6, 4,  0, 0, 9
-    ]
-    board2 = [
+    ])
+    board2 = np.array([
         0, 2, 7, 8, 6, 5, 9, 1, 3,
         9, 0, 5, 2, 0, 3, 6, 8, 7,
         6, 8, 3, 7, 9, 1, 2, 0, 4,
@@ -28,7 +29,7 @@ class SolverTest(unittest.TestCase):
         5, 9, 8, 4, 3, 7, 1, 6, 2,
         1, 3, 2, 5, 8, 6, 4, 7, 9,
         7, 6, 4, 9, 1, 2, 5, 3, 8,
-    ]
+    ])
 
     def test_backtracking_solver_init(self):
         solver = BacktrackingSolver(self.board2)
@@ -38,11 +39,11 @@ class SolverTest(unittest.TestCase):
 
     def test_str_to_board(self):
         board = str_to_board(self.board_str)
-        self.assertEqual(board, self.board)
+        self.assertTrue(np.array_equal(board, self.board))
 
     def test_board_to_str(self):
         board_str = board_to_str(self.board)
-        self.assertEqual(board_str, self.board_str)
+        self.assertTrue(np.array_equal(board_str, self.board_str))
 
     def test_is_possible(self):
         self.assertTrue(BacktrackingSolver(self.board).is_possible((2, 4), 8))  # possible
@@ -57,7 +58,7 @@ class SolverTest(unittest.TestCase):
         board = str_to_board(board_str)
         solution = str_to_board(solutions_str)
 
-        self.assertEqual(BacktrackingSolver(board).solve(), solution)
+        self.assertTrue(np.array_equal(BacktrackingSolver(board).solve(), solution))
 
     def test_backtracking_solver2(self):
         board_str = '000007490700165000000000000210000900907086013080000050800609700000500000030000020'
@@ -66,7 +67,7 @@ class SolverTest(unittest.TestCase):
         board = str_to_board(board_str)
         solution = str_to_board(solutions_str)
 
-        self.assertEqual(BacktrackingSolver(board).solve(), solution)
+        self.assertTrue(np.array_equal(BacktrackingSolver(board).solve(), solution))
 
     def test_backtracking_solver_all(self):
         test_cases = []
@@ -81,7 +82,7 @@ class SolverTest(unittest.TestCase):
                 )
 
         for _board, _solution in choices(test_cases, k=10):
-            self.assertEqual(BacktrackingSolver(_board).solve(), _solution)
+            self.assertTrue(np.array_equal(BacktrackingSolver(_board).solve(), _solution))
 
 
 if __name__ == '__main__':

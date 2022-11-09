@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from copy import copy
+from numpy import copy
+import numpy as np
+import numpy.typing as npt
 
-SudokuBoard = list[int]
+SudokuBoard = npt.NDArray
 
 
 def str_to_board(board_str: str) -> SudokuBoard:
-    return list(map(int, board_str))
+    return np.array(list(map(int, board_str)))
 
 
 def board_to_str(board: SudokuBoard) -> str:
@@ -28,9 +30,9 @@ class BacktrackingSolver(Solver):
         self.empty_cells = BacktrackingSolver._get_all_empty_cells(self.board)
 
         # contains which values are already in a row/col/box
-        self.rows = [False] * 81
-        self.cols = [False] * 81
-        self.boxes = [False] * 81
+        self.rows = np.array([False] * 81)
+        self.cols = np.array([False] * 81)
+        self.boxes = np.array([False] * 81)
 
         self._init_sections()
 
